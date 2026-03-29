@@ -1,10 +1,11 @@
 # Synthetic Data Generator
 
-A local LLM-powered utility that generates synthetic datasets from a plain English 
-description. Designed to produce CSV files for use in data engineering projects, 
+A local LLM-powered utility that generates synthetic datasets from a plain English
+description. Designed to produce CSV files for use in data engineering projects,
 pipeline testing, and portfolio demonstrations.
 
-Built as a supporting tool across a suite of data/AI portfolio projects.
+Built as a supporting tool across a suite of data/AI portfolio projects — pairs
+directly with the Data Quality Framework for end-to-end dirty data testing.
 
 ---
 
@@ -12,7 +13,7 @@ Built as a supporting tool across a suite of data/AI portfolio projects.
 
 - Two-stage LLM pipeline: schema design followed by data generation
 - Prompt engineering for structured JSON output from a local model
-- Graceful error handling and JSON recovery for malformed LLM responses
+- Graceful error handling and JSON recovery for multiple malformed LLM response types
 - Configurable dirty data injection for testing data quality pipelines
 - Clean separation between user interaction, LLM calls, validation, and output
 
@@ -45,12 +46,13 @@ CSV files + schema.json + generation_report.txt saved to /output
 - Number of files
 - Time period
 - Rows per file
+- Number of columns
 - Dirty data configuration
 
-**Random** — LLM decides everything. Industry, schema, structure, and row 
-counts are chosen autonomously. Good for quickly generating varied test data.
+Enter `r` on any question to let the LLM decide that parameter.
 
-Both modes support dirty data injection.
+**Random** — LLM decides everything autonomously. Industry, schema, structure,
+and row counts chosen without input. Good for quickly generating varied test data.
 
 ---
 
@@ -83,7 +85,6 @@ Rates are configurable at runtime.
 **Prerequisites:** Python 3.10+, [Ollama](https://ollama.com) installed and running
 ```bash
 pip install requests
-
 ollama pull llama3.2:3b
 ```
 
@@ -92,7 +93,7 @@ ollama pull llama3.2:3b
 python main.py
 ```
 
-Follow the prompts. Output is saved to `/output/{filename_prefix}_{timestamp}/` 
+Follow the prompts. Output is saved to `/output/{filename_prefix}_{timestamp}/`
 containing CSV files, `schema.json`, and `generation_report.txt`.
 
 ---
@@ -115,19 +116,19 @@ synthetic-data-generator/
 
 ## Known limitations
 
-This project uses `llama3.2:3b` running locally via Ollama. As a small model it 
+This project uses `llama3.2:3b` running locally via Ollama. As a small model it
 has known constraints:
 
-- **Data variety** — generated values can be repetitive; a larger model (GPT-4, 
-  Claude) would produce richer, more realistic data
-- **JSON reliability** — the model occasionally produces malformed JSON; the 
-  parser includes recovery logic for the most common failure modes (missing 
-  brackets, leading zeros, missing opening bracket)
-- **Field type compliance** — the model sometimes returns verbose type strings 
-  despite explicit instructions; types are sanitised post-generation as a fallback
-- **Row limits** — generation is capped at 50 rows per file and 3 files per run 
-  to prevent GPU overload and context truncation on consumer hardware
+- **Data variety** — generated values can be repetitive; a larger model would
+  produce richer, more realistic data
+- **JSON reliability** — the model occasionally produces malformed JSON; the
+  parser includes recovery logic for missing brackets, leading zeros, missing
+  opening brackets, and array-of-arrays format
+- **Field name compliance** — the model sometimes shortens field names despite
+  explicit instructions; always verify generated column names against schema.json
+- **Row and file limits** — capped at 50 rows per file and 3 files per run to
+  prevent GPU overload and context truncation on consumer hardware
 
-These are intentional tradeoffs: local inference is free, private, and runs 
-offline. Swapping to an API-based model in `generator/llm.py` would resolve most 
+These are intentional tradeoffs: local inference is free, private, and runs
+offline. Swapping to an API-based model in `generator/llm.py` would resolve most
 quality issues.

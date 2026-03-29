@@ -84,68 +84,68 @@ def run_guided() -> dict:
     """
     print("\n=== Guided Mode ===\n")
 
-    industry = ask(
-        "What industry?",
-        allow_random=True
-    )
+    # Industry
+    industry = ask("What industry?", allow_random=True)
     if industry == "random":
-        return {"random": True}
+        industry = "any industry of your choice"
 
-    data_type = ask(
-        "What kind of data?",
-        allow_random=True
-    )
+    # Data type
+    data_type = ask("What kind of data?", allow_random=True)
     if data_type == "random":
-        return {"random": True}
+        data_type = "any appropriate data type for the industry"
 
-    num_files = ask(
-        "How many files?",
-        allow_random=True
-    )
-    if num_files == "random":
-        return {"random": True}
+    # Number of files
+    num_files_ans = ask("How many files?")
     try:
-        num_files = int(num_files)
+        num_files = int(num_files_ans)
     except ValueError:
         print("  Defaulting to 1 file.")
         num_files = 1
 
+    # Time period
     time_period = ask(
         "What time period should the data cover? (eg. 'last 6 months', '2023')",
         allow_random=True
     )
     if time_period == "random":
-        return {"random": True}
+        time_period = "a realistic time period for the data type"
 
-    rows_answer = ask(
-        "Approximate rows per file?",
-        allow_random=True
-    )
-    if rows_answer == "random":
+    # Rows per file
+    rows_ans = ask("Approximate rows per file? (max 50)", allow_random=True)
+    if rows_ans == "random":
         rows_per_file = None
     else:
         try:
-            rows_per_file = int(rows_answer)
+            rows_per_file = min(int(rows_ans), 50)
         except ValueError:
-            print("  Defaulting to LLM decision.")
+            print("  Defaulting to LLM decision (capped at 50).")
             rows_per_file = None
 
-    dirty_answer = ask(
-        "\nInject dirty data?",
-        options=["yes", "no"]
-    )
+    # Number of columns
+    cols_ans = ask("How many columns? (max 7)", allow_random=True)
+    if cols_ans == "random":
+        num_columns = None
+    else:
+        try:
+            num_columns = min(int(cols_ans), 7)
+        except ValueError:
+            print("  Defaulting to LLM decision (capped at 7).")
+            num_columns = None
+
+    # Dirty data
+    dirty_answer = ask("\nInject dirty data?", options=["yes", "no"])
     dirty_config = get_dirty_config() if dirty_answer == "yes" else {"enabled": False}
 
     return {
-        "random":       False,
-        "industry":     industry,
-        "data_type":    data_type,
-        "num_files":    num_files,
-        "time_period":  time_period,
+        "random":        False,
+        "industry":      industry,
+        "data_type":     data_type,
+        "num_files":     num_files,
+        "time_period":   time_period,
         "rows_per_file": rows_per_file,
-        "dirty_config": dirty_config
+        "num_columns":   num_columns,
+        "dirty_config":  dirty_config
     }
-
 
 def run_random() -> dict:
     """Random mode — LLM decides everything."""

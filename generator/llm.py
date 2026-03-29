@@ -28,6 +28,9 @@ def _parse_json_response(raw: str) -> any:
     import re
     cleaned = re.sub(r':\s*0+(\d+)', r': \1', cleaned)
 
+    cleaned = re.sub(r'\[("[\w]+":)', r'{\1', cleaned)
+    cleaned = re.sub(r'(,\s*"[\w]+":\s*"[^"]*")\]', r'\1}', cleaned)
+
     # Step 2: try a clean parse first
     try:
         return json.loads(cleaned)
@@ -58,6 +61,25 @@ def _parse_json_response(raw: str) -> any:
                 return rows
             except json.JSONDecodeError:
                 pass
+
+
+    # Handle array-of-arrays format — model returned headers + rows instead of objects
+    # e.g. [["col1","col2"], ["val1","val2"]] → [{"col1": "val1", "col2": "val2"}]
+    if cleaned.startswith("["):
+        try:
+            raw_array = json.loads(cleaned + "]") if not cleaned.endswith("]") else json.loads(cleaned)
+            if isinstance(raw_array, list) and len(raw_array) > 1:
+                if isinstance(raw_array[0], list):
+                    headers = raw_array[0]
+                    rows = []
+                    for row in raw_array[1:]:
+                        if isinstance(row, list) and len(row) == len(headers):
+                            rows.append(dict(zip(headers, row)))
+                    if rows:
+                        print(f"    Warning: converted array-of-arrays to {len(rows)} row objects")
+                        return rows
+        except (json.JSONDecodeError, TypeError):
+            pass
 
     raise ValueError(
         f"LLM returned invalid JSON — could not parse or salvage.\n"
